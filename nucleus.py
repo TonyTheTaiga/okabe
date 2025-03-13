@@ -157,6 +157,31 @@ def encode_color_state(hue: int, saturation: int, brightness: int, kelvin: int, 
     )
 
 
+def normalize_color(state: dict) -> dict:
+    """
+    Normalize color values to more user-friendly ranges.
+
+    Args:
+        state: Dictionary with raw state values
+
+    Returns:
+        Dictionary with normalized values:
+        - hue: 0-360 degrees
+        - saturation: 0-100%
+        - brightness: 0-100%
+        - power: boolean (on/off)
+    """
+    normalized = state.copy()
+
+    # LIFX uses 16-bit values for colors
+    normalized["hue"] = round((state["hue"] / 65535) * 360)
+    normalized["saturation"] = round((state["saturation"] / 65535) * 100)
+    normalized["brightness"] = round((state["brightness"] / 65535) * 100)
+    normalized["power"] = bool(state["power"])
+
+    return normalized
+
+
 if __name__ == "__main__":
     # nucleus = Nucleus(task="What's the weather like in San Francisco?")
     # nucleus.add_tool_option(
@@ -176,8 +201,8 @@ if __name__ == "__main__":
 
     lights = Lifx.discover()
     for light in lights:
+        response = light.set_color(hue=120, saturation=1.0, brightness=1.0, kelvin=3500)[0][2]
+        print(decode_color_state(response.packet_data))
+
         response = light.get_color()[0][2]
-        print(response)
-        print(response.packet_data)
-        decoded = decode_color_state(response.packet_data)
-        print(decoded)
+        print(decode_color_state(response.packet_data))

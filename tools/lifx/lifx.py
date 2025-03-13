@@ -203,7 +203,7 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def set_color(self, color: bytes) -> List[Message]:
+    def set_color(self, hue, saturation, brightness, kelvin, duration=0) -> List[Message]:
         """
         Set the color of the light.
 
@@ -216,7 +216,29 @@ class Light:
         Note:
             This method is not implemented yet.
         """
-        pass
+
+        packet_data = struct.pack(
+            "<BHHHHI",
+            0,
+            int(round(0x10000 * hue) / 360) % 0x10000,
+            int(round(0xFFFF * saturation)),
+            int(round(0xFFFF * brightness)),
+            kelvin,
+            duration,
+        )
+        print(packet_data)
+        msg = Message.pack(
+            pkt_type=102,
+            source=2,
+            tagged=0,
+            res=1,
+            ack=0,
+            sequence=0,
+            target=self.target_hex,
+            packet_data=packet_data,
+        )
+        res = Lifx.send(msg)
+        return res
 
     @property
     def target(self) -> str:
