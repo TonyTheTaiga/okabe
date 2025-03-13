@@ -105,4 +105,4 @@ if __name__ == "__main__":
 
     lights = Lifx.discover()
     for light in lights:
-        print(light.target)
+        print(light.set_power(0))
