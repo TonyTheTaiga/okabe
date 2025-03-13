@@ -1,5 +1,7 @@
 import os
 from typing import NamedTuple
+import struct
+
 
 from anthropic import Anthropic
 from anthropic.types import ToolUseBlock, TextBlock
@@ -86,6 +88,75 @@ def get_weather(location: str):
     print(location)
 
 
+def decode_color_state(data: bytes) -> dict:
+    """
+    Decode a LIFX light state packet.
+
+    Args:
+        data: Raw bytes data containing the light state
+
+    Returns:
+        Dictionary with decoded light state values
+
+    Format:
+        hue: Uint16
+        saturation: Uint16
+        brightness: Uint16
+        kelvin: Uint16
+        reserved6: 2 Reserved bytes
+        power: Uint16
+        label: 32 bytes String
+        reserved7: 8 Reserved bytes
+    """
+    if len(data) < 52:
+        raise ValueError(f"Not enough data to decode state: {len(data)} bytes, expected 52")
+
+    hue, saturation, brightness, kelvin, power, label_bytes = struct.unpack("<HHHH2xH32s8x", data)
+    label = label_bytes.split(b"\x00")[0].decode("utf-8")
+
+    return {
+        "hue": hue,
+        "saturation": saturation,
+        "brightness": brightness,
+        "kelvin": kelvin,
+        "power": power,
+        "label": label,
+    }
+
+
+def encode_color_state(hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str) -> bytes:
+    """
+    Encode light state values to binary data.
+
+    Args:
+        hue: Hue value (0-65535)
+        saturation: Saturation value (0-65535)
+        brightness: Brightness value (0-65535)
+        kelvin: Color temperature (2500-9000)
+        power: Power state (True/False)
+        label: Light label (max 31 chars)
+
+    Returns:
+        Encoded bytes ready to be sent in a LIFX packet
+    """
+    encoded_label = label.encode("utf-8")
+    if len(encoded_label) > 31:
+        encoded_label = encoded_label[:31]
+
+    encoded_label = encoded_label.ljust(32, b"\x00")
+    power_value = 65535 if power else 0
+    return struct.pack(
+        "<HHHHH2xH32s8x",
+        hue,
+        saturation,
+        brightness,
+        kelvin,
+        0,
+        power_value,
+        encoded_label,
+    )
+
+
 if __name__ == "__main__":
     # nucleus = Nucleus(task="What's the weather like in San Francisco?")
     # nucleus.add_tool_option(
@@ -105,4 +176,8 @@ if __name__ == "__main__":
 
     lights = Lifx.discover()
     for light in lights:
-        print(light.set_power(0))
+        response = light.get_color()[0][2]
+        print(response)
+        print(response.packet_data)
+        decoded = decode_color_state(response.packet_data)
+        print(decoded)

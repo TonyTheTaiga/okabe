@@ -7,6 +7,7 @@ import logging
 from typing import List, Tuple
 import ifaddr
 from .message import Message
+from tools.lifx import message
 
 DEVICE_PORT = 56700
 SOCKET_TIMEOUT = 1
@@ -83,10 +84,10 @@ class Lifx:
             if not addr.exploded.startswith("192"):
                 continue
             sock.sendto(msg.packed_msg, (addr.exploded, DEVICE_PORT))
-            if msg.response_required:
+            response = messages.extend(read(sock))
+            if response:
                 messages.extend(read(sock))
-            if msg.ack_required:
-                messages.extend(read(sock))
+
             sock.close()
         return messages
 
@@ -159,7 +160,7 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def set_power(self, on: bool, res=0, ack=0) -> List[Message]:
+    def set_power(self, on: bool) -> List[Message]:
         """
         Set the power state of the light.
 
@@ -183,8 +184,21 @@ class Light:
             target=self.target_hex,
             sequence=0,
             packet_data=struct.pack("<H", level),
-            res=res,
-            ack=ack,
+            res=1,
+            ack=0,
+        )
+        messages = Lifx.send(msg)
+        return messages
+
+    def get_color(self):
+        msg = Message.pack(
+            pkt_type=101,
+            source=2,
+            tagged=0,
+            target=self.target_hex,  # pyright: ignore
+            sequence=0,
+            res=0,
+            ack=0,
         )
         messages = Lifx.send(msg)
         return messages

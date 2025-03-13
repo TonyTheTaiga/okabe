@@ -23,7 +23,7 @@ class SetPower(Packet):
 
 
 class SetColor(Packet):
-    ues = "Set"
+    use = "Set"
     pkt_type = 102
 
 

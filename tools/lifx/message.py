@@ -174,6 +174,19 @@ class Message:
     as well as accessing various header fields.
     """
 
+    def __init__(self, header: bytes, packet_data: bytes):
+        """
+        Initialize a Message with the provided header and packet data.
+
+        Args:
+            header: Binary header data
+            packet_data: Binary payload data
+        """
+        self.header = header
+        self.packet_data = packet_data
+
+        self._packet = None
+
     @classmethod
     def pack(
         cls,
@@ -229,19 +242,6 @@ class Message:
             raise IncompleteHeader()
 
         return cls(header=data[:36], packet_data=data[36:])
-
-    def __init__(self, header: bytes, packet_data: bytes):
-        """
-        Initialize a Message with the provided header and packet data.
-
-        Args:
-            header: Binary header data
-            packet_data: Binary payload data
-        """
-        self.header = header
-        self.packet_data = packet_data
-
-        self._packet = None
 
     def __getitem__(self, byte_position) -> bytes:
         """
