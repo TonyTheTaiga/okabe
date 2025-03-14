@@ -325,7 +325,7 @@ class Light:
         Set the color of the light.
 
         Args:
-            color: The color to set as a byte string
+            
 
         Returns:
             List of Message objects containing responses (if any)

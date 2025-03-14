@@ -44,3 +44,7 @@ python nucleus.py
 ```
 
 Be amazed by how little it can accomplish!
+
+
+### Helpful Docs
+* https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#single-tool-example
