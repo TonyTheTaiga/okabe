@@ -5,9 +5,10 @@ import socket
 import struct
 import logging
 from typing import List, Tuple
+
 import ifaddr
+
 from .message import Message
-from tools.lifx import message
 
 DEVICE_PORT = 56700
 SOCKET_TIMEOUT = 1
@@ -35,6 +36,118 @@ def get_broadcast_addresses() -> List[ipaddress.IPv4Address]:
                 ipaddress.IPv4Interface(f"{addr.ip}/{addr.network_prefix}").network.broadcast_address
             )
     return broadcast_addresses
+
+
+def create_socket() -> socket.socket:
+    """
+    Create a socket for communicating with LIFX devices.
+
+    Creates a UDP socket, configures it for broadcast, sets a timeout,
+    and binds it to a random port.
+
+    Returns:
+        A configured socket object ready for LIFX communication
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    s.settimeout(SOCKET_TIMEOUT)
+    s.bind(("", 0))
+    return s
+
+
+def decode_color_state(data: bytes) -> dict:
+    """
+    Decode a LIFX light state packet.
+
+    Args:
+        data: Raw bytes data containing the light state
+
+    Returns:
+        Dictionary with decoded light state values
+
+    Format:
+        hue: Uint16
+        saturation: Uint16
+        brightness: Uint16
+        kelvin: Uint16
+        reserved6: 2 Reserved bytes
+        power: Uint16
+        label: 32 bytes String
+        reserved7: 8 Reserved bytes
+    """
+    if len(data) < 52:
+        raise ValueError(f"Not enough data to decode state: {len(data)} bytes, expected 52")
+
+    hue, saturation, brightness, kelvin, power, label_bytes = struct.unpack("<HHHH2xH32s8x", data)
+    label = label_bytes.split(b"\x00")[0].decode("utf-8")
+
+    return {
+        "hue": hue,
+        "saturation": saturation,
+        "brightness": brightness,
+        "kelvin": kelvin,
+        "power": power,
+        "label": label,
+    }
+
+
+def encode_color_state(hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str) -> bytes:
+    """
+    Encode light state values to binary data.
+
+    Args:
+        hue: Hue value (0-65535)
+        saturation: Saturation value (0-65535)
+        brightness: Brightness value (0-65535)
+        kelvin: Color temperature (2500-9000)
+        power: Power state (True/False)
+        label: Light label (max 31 chars)
+
+    Returns:
+        Encoded bytes ready to be sent in a LIFX packet
+    """
+    encoded_label = label.encode("utf-8")
+    if len(encoded_label) > 31:
+        encoded_label = encoded_label[:31]
+
+    encoded_label = encoded_label.ljust(32, b"\x00")
+    power_value = 65535 if power else 0
+    return struct.pack(
+        "<HHHHH2xH32s8x",
+        hue,
+        saturation,
+        brightness,
+        kelvin,
+        0,
+        power_value,
+        encoded_label,
+    )
+
+
+def normalize_color(state: dict) -> dict:
+    """
+    Normalize color values to more user-friendly ranges.
+
+    Args:
+        state: Dictionary with raw state values
+
+    Returns:
+        Dictionary with normalized values:
+        - hue: 0-360 degrees
+        - saturation: 0-100%
+        - brightness: 0-100%
+        - power: boolean (on/off)
+    """
+    normalized = state.copy()
+
+    # LIFX uses 16-bit values for colors
+    normalized["hue"] = round((state["hue"] / 65535) * 360)
+    normalized["saturation"] = round((state["saturation"] / 65535) * 100)
+    normalized["brightness"] = round((state["brightness"] / 65535) * 100)
+    normalized["power"] = bool(state["power"])
+
+    return normalized
 
 
 class Lifx:
@@ -226,7 +339,6 @@ class Light:
             kelvin,
             duration,
         )
-        print(packet_data)
         msg = Message.pack(
             pkt_type=102,
             source=2,
@@ -249,21 +361,3 @@ class Light:
             The MAC address of the light as a hex string
         """
         return binascii.hexlify(self.target_hex).decode()
-
-
-def create_socket() -> socket.socket:
-    """
-    Create a socket for communicating with LIFX devices.
-
-    Creates a UDP socket, configures it for broadcast, sets a timeout,
-    and binds it to a random port.
-
-    Returns:
-        A configured socket object ready for LIFX communication
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    s.settimeout(SOCKET_TIMEOUT)
-    s.bind(("", 0))
-    return s

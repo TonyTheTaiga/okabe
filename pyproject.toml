@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = "okabe"
+authors = [
+    {name = "Taiga Ishida", email = "taigaishida.dev@gmail.com"},
+]
+description = "cooking"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["steins", "gate", "best", "anime"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "anthropic",
+    "ifaddr",
+    "pydantic"
+]
+
+[tool.setuptools_scm]
+version_file = "okabe/version.py"
+
+[project.optional-dependencies]
+dev = ["python-dotenv"]
+
+[tool.setuptools]
+packages = ["okabe"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["I"]
+
+[tool.ruff.format]
+line-ending = "auto"
+skip-magic-trailing-comma = false

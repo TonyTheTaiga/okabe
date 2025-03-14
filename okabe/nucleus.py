@@ -1,13 +1,12 @@
 import os
 from typing import NamedTuple
-import struct
 
 
 from anthropic import Anthropic
 from anthropic.types import ToolUseBlock, TextBlock
 from dotenv import load_dotenv
 
-from tools.lifx.lifx import Lifx
+from tools.lifx import Lifx
 
 load_dotenv()
 
@@ -43,6 +42,10 @@ def compile_tools(tools: list):
         )
 
     return ret
+
+
+class LLMCaller:
+    def __init__(self): ...
 
 
 class Nucleus:
@@ -82,104 +85,6 @@ class Nucleus:
                 print(fn_output, text_output)
 
             break
-
-
-def get_weather(location: str):
-    print(location)
-
-
-def decode_color_state(data: bytes) -> dict:
-    """
-    Decode a LIFX light state packet.
-
-    Args:
-        data: Raw bytes data containing the light state
-
-    Returns:
-        Dictionary with decoded light state values
-
-    Format:
-        hue: Uint16
-        saturation: Uint16
-        brightness: Uint16
-        kelvin: Uint16
-        reserved6: 2 Reserved bytes
-        power: Uint16
-        label: 32 bytes String
-        reserved7: 8 Reserved bytes
-    """
-    if len(data) < 52:
-        raise ValueError(f"Not enough data to decode state: {len(data)} bytes, expected 52")
-
-    hue, saturation, brightness, kelvin, power, label_bytes = struct.unpack("<HHHH2xH32s8x", data)
-    label = label_bytes.split(b"\x00")[0].decode("utf-8")
-
-    return {
-        "hue": hue,
-        "saturation": saturation,
-        "brightness": brightness,
-        "kelvin": kelvin,
-        "power": power,
-        "label": label,
-    }
-
-
-def encode_color_state(hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str) -> bytes:
-    """
-    Encode light state values to binary data.
-
-    Args:
-        hue: Hue value (0-65535)
-        saturation: Saturation value (0-65535)
-        brightness: Brightness value (0-65535)
-        kelvin: Color temperature (2500-9000)
-        power: Power state (True/False)
-        label: Light label (max 31 chars)
-
-    Returns:
-        Encoded bytes ready to be sent in a LIFX packet
-    """
-    encoded_label = label.encode("utf-8")
-    if len(encoded_label) > 31:
-        encoded_label = encoded_label[:31]
-
-    encoded_label = encoded_label.ljust(32, b"\x00")
-    power_value = 65535 if power else 0
-    return struct.pack(
-        "<HHHHH2xH32s8x",
-        hue,
-        saturation,
-        brightness,
-        kelvin,
-        0,
-        power_value,
-        encoded_label,
-    )
-
-
-def normalize_color(state: dict) -> dict:
-    """
-    Normalize color values to more user-friendly ranges.
-
-    Args:
-        state: Dictionary with raw state values
-
-    Returns:
-        Dictionary with normalized values:
-        - hue: 0-360 degrees
-        - saturation: 0-100%
-        - brightness: 0-100%
-        - power: boolean (on/off)
-    """
-    normalized = state.copy()
-
-    # LIFX uses 16-bit values for colors
-    normalized["hue"] = round((state["hue"] / 65535) * 360)
-    normalized["saturation"] = round((state["saturation"] / 65535) * 100)
-    normalized["brightness"] = round((state["brightness"] / 65535) * 100)
-    normalized["power"] = bool(state["power"])
-
-    return normalized
 
 
 if __name__ == "__main__":
