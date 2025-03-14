@@ -18,13 +18,6 @@ Currently implemented tools:
 
 This is an early-stage project. The framework allows defining tools for an LLM to use, with various built-in tools that I decided to implement (You can easily bring your own tools). The `Nucleus` class provides the core framework for defining any tools that an LLM can interact with. 
 
-### Roadmap
-
-- Add support for more smart devices and services
-- Expand the core framework capabilities
-- Improve documentation and examples
-- Add unit and integration tests
-
 ### Installation
 
 1. Clone the repository
