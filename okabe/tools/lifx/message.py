@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import Union
-import struct
+
 import binascii
+import struct
+from typing import Union
 
 from pydantic import BaseModel
 
-from .packet import Packet, PACKETS, UnsupportedPacketType
+from .packet import PACKETS, Packet, UnsupportedPacketType
 
 HEADER_SIZE = 36
 

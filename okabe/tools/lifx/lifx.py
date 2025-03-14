@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 import binascii
 import ipaddress
+import logging
 import socket
 import struct
-import logging
 from typing import List, Tuple
 
 import ifaddr
@@ -33,7 +34,9 @@ def get_broadcast_addresses() -> List[ipaddress.IPv4Address]:
             if addr.ip == "127.0.0.1":
                 continue
             broadcast_addresses.append(
-                ipaddress.IPv4Interface(f"{addr.ip}/{addr.network_prefix}").network.broadcast_address
+                ipaddress.IPv4Interface(
+                    f"{addr.ip}/{addr.network_prefix}"
+                ).network.broadcast_address
             )
     return broadcast_addresses
 
@@ -92,7 +95,9 @@ def decode_color_state(data: bytes) -> dict:
     }
 
 
-def encode_color_state(hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str) -> bytes:
+def encode_color_state(
+    hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str
+) -> bytes:
     """
     Encode light state values to binary data.
 
@@ -309,10 +314,10 @@ class Light:
     def get_color(self) -> List[Message]:
         """
         Get the current color state of the light.
-        
+
         Sends a request to retrieve the current hue, saturation, brightness,
         and color temperature of the light.
-        
+
         Returns:
             List of Message objects containing the color state response
         """
@@ -328,7 +333,9 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def set_color(self, hue: float, saturation: float, brightness: float, kelvin: int, duration: int = 0) -> List[Message]:
+    def set_color(
+        self, hue: float, saturation: float, brightness: float, kelvin: int, duration: int = 0
+    ) -> List[Message]:
         """
         Set the color of the light.
 

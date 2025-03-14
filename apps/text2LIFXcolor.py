@@ -4,6 +4,7 @@ Text to LIFX Image - Application for controlling LIFX lights with text prompts.
 This application allows controlling LIFX lights through natural language text prompts.
 It uses Claude to interpret text descriptions and convert them to light control commands.
 """
+
 import random
 
 from okabe import Nucleus
@@ -14,18 +15,19 @@ from okabe.tools.lifx import Lifx, Light
 class LightManager:
     """
     Manages a collection of LIFX lights.
-    
+
     This class provides methods for interacting with multiple LIFX lights,
     making it easier to control them as a group or individually.
-    
+
     Attributes:
         lights: List of LIFX Light objects
         light_map: Dictionary mapping light IDs to Light objects
     """
+
     def __init__(self, lights: list[Light]):
         """
         Initialize a LightManager with a list of lights.
-        
+
         Args:
             lights: List of LIFX Light objects to manage
         """
@@ -35,7 +37,7 @@ class LightManager:
     def get_lights(self) -> list[str]:
         """
         Get the IDs of all managed lights.
-        
+
         Returns:
             List of light IDs as strings
         """
@@ -44,11 +46,11 @@ class LightManager:
     def set_light_color(self, light_id: str, hue: int) -> int:
         """
         Set the color of a specific light.
-        
+
         Args:
             light_id: The ID of the light to control
             hue: The hue value to set (0-360)
-            
+
         Returns:
             0 on success, 1 on failure
         """
@@ -63,7 +65,7 @@ class LightManager:
 def main():
     """
     Main entry point for the application.
-    
+
     Discovers LIFX lights on the network, initializes the LightManager,
     and sets up a Nucleus agent to control lights with natural language.
     """
@@ -82,7 +84,9 @@ def main():
         sig=[
             ToolSignature(name="light_id", dtype="string", description="The id of the LIFX buld"),
             ToolSignature(
-                name="hue", dtype="integer", description="The hue to change the light bulb to, value between 0-360"
+                name="hue",
+                dtype="integer",
+                description="The hue to change the light bulb to, value between 0-360",
             ),
         ],
     )

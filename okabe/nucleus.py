@@ -4,13 +4,13 @@ Nucleus module - Core framework for creating AI agents with tool-calling capabil
 This module provides the infrastructure for creating AI assistants that can use
 tools to control LIFX lights and potentially other devices.
 """
-import os
-import json
-from typing import Any, Dict, List, NamedTuple, Tuple, Callable, Optional
 
+import json
+import os
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from anthropic import Anthropic
-from anthropic.types import ToolUseBlock, TextBlock
+from anthropic.types import TextBlock, ToolUseBlock
 
 try:
     from dotenv import load_dotenv
@@ -22,7 +22,12 @@ except:
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 
-def chat(client: Anthropic, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]], system: Optional[str] = None):
+def chat(
+    client: Anthropic,
+    messages: List[Dict[str, Any]],
+    tools: List[Dict[str, Any]],
+    system: Optional[str] = None,
+):
     """
     Send a message to the Claude API with tools.
 
@@ -54,6 +59,7 @@ class ToolSignature(NamedTuple):
         dtype: Parameter data type
         description: Human-readable description of the parameter
     """
+
     name: str
     dtype: str
     description: str
@@ -62,11 +68,11 @@ class ToolSignature(NamedTuple):
 class Nucleus:
     """
     Core agent class that manages tools and communication with the LLM.
-    
+
     The Nucleus class provides a framework for registering tools that Claude can use,
     and handles the conversation flow between the user, Claude, and the tool executions.
     """
-    
+
     def __init__(self, task: str) -> None:
         """
         Initialize a new Nucleus agent.
@@ -79,7 +85,9 @@ class Nucleus:
         self._tool_map = {}
         self.client = Anthropic(api_key=ANTHROPIC_KEY)
 
-    def add_tool_option(self, name: str, description: str, callable: Callable, sig: List[ToolSignature]) -> None:
+    def add_tool_option(
+        self, name: str, description: str, callable: Callable, sig: List[ToolSignature]
+    ) -> None:
         """
         Register a new tool that the agent can use.
 
@@ -125,8 +133,15 @@ class Nucleus:
             messages.append({"role": "assistant", "content": completion.model_dump()["content"]})
             match completion.content:
                 case [
-                    TextBlock(citations=text_block_citations, text=text_block_text, type=text_block_type),
-                    ToolUseBlock(id=tool_block_id, name=tool_block_name, input=tool_block_input, type=tool_block_type),
+                    TextBlock(
+                        citations=text_block_citations, text=text_block_text, type=text_block_type
+                    ),
+                    ToolUseBlock(
+                        id=tool_block_id,
+                        name=tool_block_name,
+                        input=tool_block_input,
+                        type=tool_block_type,
+                    ),
                 ]:
                     tool_result = self._tool_map[tool_block_name](**tool_block_input)
                     print(text_block_text, tool_result)
@@ -143,11 +158,18 @@ class Nucleus:
                         }
                     )
                 case [
-                    TextBlock(citations=text_block_citations, text=text_block_text, type=text_block_type),
+                    TextBlock(
+                        citations=text_block_citations, text=text_block_text, type=text_block_type
+                    ),
                 ]:
                     return text_block_text
                 case [
-                    ToolUseBlock(id=tool_block_id, name=tool_block_name, input=tool_block_input, type=tool_block_type),
+                    ToolUseBlock(
+                        id=tool_block_id,
+                        name=tool_block_name,
+                        input=tool_block_input,
+                        type=tool_block_type,
+                    ),
                 ]:
                     tool_result = self._tool_map[tool_block_name](**tool_block_input)
                     messages.append(
@@ -183,7 +205,8 @@ class Nucleus:
                     "input_schema": {
                         "type": "object",
                         "properties": {
-                            _sig.name: {"type": _sig.dtype, "description": _sig.description} for _sig in sig
+                            _sig.name: {"type": _sig.dtype, "description": _sig.description}
+                            for _sig in sig
                         },
                     },
                 }
