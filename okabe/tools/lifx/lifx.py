@@ -244,6 +244,7 @@ class Light:
         Initialize a Light object.
 
         Args:
+            source: Source identifier used to differentiate clients
             target_hex: The MAC address of the light as a byte string
             host: The IP address of the light
             port: The port to communicate with the light on
@@ -283,8 +284,6 @@ class Light:
 
         Args:
             on: True to turn the light on, False to turn it off
-            res: Flag indicating if response is required (default: 0)
-            ack: Flag indicating if acknowledgment is required (default: 0)
 
         Returns:
             List of Message objects containing responses (if any)
@@ -307,7 +306,16 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def get_color(self):
+    def get_color(self) -> List[Message]:
+        """
+        Get the current color state of the light.
+        
+        Sends a request to retrieve the current hue, saturation, brightness,
+        and color temperature of the light.
+        
+        Returns:
+            List of Message objects containing the color state response
+        """
         msg = Message.pack(
             pkt_type=101,
             source=2,
@@ -320,18 +328,19 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def set_color(self, hue, saturation, brightness, kelvin, duration=0) -> List[Message]:
+    def set_color(self, hue: float, saturation: float, brightness: float, kelvin: int, duration: int = 0) -> List[Message]:
         """
         Set the color of the light.
 
         Args:
-            
+            hue: Hue value in degrees (0-360)
+            saturation: Saturation value (0.0-1.0)
+            brightness: Brightness value (0.0-1.0)
+            kelvin: Color temperature in Kelvin (2500-9000)
+            duration: Transition time in milliseconds (default: 0)
 
         Returns:
             List of Message objects containing responses (if any)
-
-        Note:
-            This method is not implemented yet.
         """
 
         packet_data = struct.pack(
