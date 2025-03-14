@@ -2,6 +2,8 @@
 
 The World's Greatest AI Agent Framework
 
+![Mad Scientist](okabe.webp)
+
 ### What it does
 
 Okabe is a lightweight framework for creating AI agents with simple tools. The core concept is a minimal agent that:
