@@ -86,7 +86,3 @@ The framework is designed to make it easy to add new tools for different devices
 ### Helpful Docs
 * [Claude Tool Use Documentation](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#single-tool-example)
 * [LIFX Developer Documentation](https://lan.developer.lifx.com/)
-
-### Fun Fact
-
-The project is named after Okabe Rintarou from Steins;Gate
