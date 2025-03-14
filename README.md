@@ -7,21 +7,24 @@ The World's Greatest AI Agent Framework
 ### What it does
 
 Okabe is a lightweight framework for creating AI agents with simple tools. The core concept is a minimal agent that:
+
 - Makes it easy to define new tools and capabilities
 - Connects LLMs to physical devices and services
 
 Currently implemented tools:
+
 - LIFX smart light control through UDP protocol (first tool implemented)
 - More tools coming soon!
 
 ### Current status
 
-This is an early-stage project. The framework allows defining tools for an LLM to use, with various built-in tools that I decided to implement (You can easily bring your own tools). The `Nucleus` class provides the core framework for defining any tools that an LLM can interact with. 
+This is an early-stage project. The framework allows defining tools for an LLM to use, with various built-in tools that I decided to implement (You can easily bring your own tools). The `Nucleus` class provides the core framework for defining any tools that an LLM can interact with.
 
 ### Installation
 
 1. Clone the repository
 2. Install the package in development mode:
+
 ```bash
 pip install -e .
 ```
@@ -29,6 +32,7 @@ pip install -e .
 ### Usage
 
 Set your API key:
+
 ```bash
 export ANTHROPIC_API_KEY=your_key_here
 ```
@@ -46,6 +50,7 @@ python apps/text2LIFXcolor.py
 ### Development
 
 This project uses:
+
 - `setuptools` for packaging
 - `ruff` for linting and formatting
 - Python type hints throughout
@@ -79,10 +84,12 @@ result = nucleus.run()
 ### Adding New Tools
 
 The framework is designed to make it easy to add new tools for different devices or services:
+
 1. Create a new module in the `tools` directory
 2. Implement the core functionality for your device/service
 3. Use the `Nucleus.add_tool_option` to register your tools
 
 ### Helpful Docs
-* [Claude Tool Use Documentation](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#single-tool-example)
-* [LIFX Developer Documentation](https://lan.developer.lifx.com/)
+
+- [Claude Tool Use Documentation](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#single-tool-example)
+- [LIFX Developer Documentation](https://lan.developer.lifx.com/)
