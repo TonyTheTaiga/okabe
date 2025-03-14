@@ -6,7 +6,6 @@ from anthropic import Anthropic
 from anthropic.types import ToolUseBlock, TextBlock
 from dotenv import load_dotenv
 
-from okabe.tools.lifx import Lifx
 
 load_dotenv()
 
