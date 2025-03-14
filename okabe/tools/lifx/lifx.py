@@ -173,7 +173,8 @@ class Lifx:
         messages = Lifx.send(msg)
         lights = []
         for host, port, message in messages:
-            lights.append(Light(message.target_hex, host, port))
+            lights.append(Light(message.source, message.target_hex, host, port))
+
         return lights
 
     @staticmethod
@@ -196,32 +197,34 @@ class Lifx:
         for addr in broadcast_addresses:
             if not addr.exploded.startswith("192"):
                 continue
+
             sock.sendto(msg.packed_msg, (addr.exploded, DEVICE_PORT))
-            response = messages.extend(read(sock))
+            response = Lifx.read(sock)
             if response:
-                messages.extend(read(sock))
+                messages.extend(response)
 
             sock.close()
+
         return messages
 
+    @staticmethod
+    def read(sock: socket.socket) -> List[Tuple[str, int, Message]]:
+        """
+        Read responses from a socket.
 
-def read(sock: socket.socket) -> List[Tuple[str, int, Message]]:
-    """
-    Read responses from a socket.
+        Waits for and unpacks messages received on the given socket.
 
-    Waits for and unpacks messages received on the given socket.
+        Args:
+            sock: The socket to read from
 
-    Args:
-        sock: The socket to read from
-
-    Returns:
-        List of tuples containing (host, port, Message) for each response
-    """
-    responses = []
-    data, (host, port) = sock.recvfrom(128)
-    msg = Message.unpack(data)
-    responses.append((host, port, msg))
-    return responses
+        Returns:
+            List of tuples containing (host, port, Message) for each response
+        """
+        responses = []
+        data, (host, port) = sock.recvfrom(128)
+        msg = Message.unpack(data)
+        responses.append((host, port, msg))
+        return responses
 
 
 class Light:
@@ -236,7 +239,7 @@ class Light:
         port: The port to communicate with the light on
     """
 
-    def __init__(self, target_hex: bytes, host: str, port: int) -> None:
+    def __init__(self, source: str, target_hex: bytes, host: str, port: int) -> None:
         """
         Initialize a Light object.
 
@@ -245,6 +248,7 @@ class Light:
             host: The IP address of the light
             port: The port to communicate with the light on
         """
+        self.source = source
         self.target_hex = target_hex
         self.host = host
         self.port = port
@@ -361,3 +365,6 @@ class Light:
             The MAC address of the light as a hex string
         """
         return binascii.hexlify(self.target_hex).decode()
+
+    def __repr__(self) -> str:
+        return f"<Light(hex={self.target})>"

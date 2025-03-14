@@ -6,7 +6,7 @@ from anthropic import Anthropic
 from anthropic.types import ToolUseBlock, TextBlock
 from dotenv import load_dotenv
 
-from tools.lifx import Lifx
+from okabe.tools.lifx import Lifx
 
 load_dotenv()
 
@@ -85,29 +85,3 @@ class Nucleus:
                 print(fn_output, text_output)
 
             break
-
-
-if __name__ == "__main__":
-    # nucleus = Nucleus(task="What's the weather like in San Francisco?")
-    # nucleus.add_tool_option(
-    #     name="get_weather",
-    #     description="Get the current weather in a given location",
-    #     callable=get_weather,
-    #     sig=[
-    #         ToolSignature(
-    #             name="location",
-    #             dtype="string",
-    #             description="The city and state, e.g. San Francisco, CA",
-    #         ),
-    #     ],
-    # )
-
-    # nucleus.run()
-
-    lights = Lifx.discover()
-    for light in lights:
-        response = light.set_color(hue=120, saturation=1.0, brightness=1.0, kelvin=3500)[0][2]
-        print(decode_color_state(response.packet_data))
-
-        response = light.get_color()[0][2]
-        print(decode_color_state(response.packet_data))
