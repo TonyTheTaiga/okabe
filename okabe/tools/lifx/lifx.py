@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 import binascii
 import ipaddress
+import logging
 import socket
 import struct
-import logging
 from typing import List, Tuple
 
 import ifaddr
@@ -33,7 +34,9 @@ def get_broadcast_addresses() -> List[ipaddress.IPv4Address]:
             if addr.ip == "127.0.0.1":
                 continue
             broadcast_addresses.append(
-                ipaddress.IPv4Interface(f"{addr.ip}/{addr.network_prefix}").network.broadcast_address
+                ipaddress.IPv4Interface(
+                    f"{addr.ip}/{addr.network_prefix}"
+                ).network.broadcast_address
             )
     return broadcast_addresses
 
@@ -92,7 +95,9 @@ def decode_color_state(data: bytes) -> dict:
     }
 
 
-def encode_color_state(hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str) -> bytes:
+def encode_color_state(
+    hue: int, saturation: int, brightness: int, kelvin: int, power: bool, label: str
+) -> bytes:
     """
     Encode light state values to binary data.
 
@@ -173,7 +178,8 @@ class Lifx:
         messages = Lifx.send(msg)
         lights = []
         for host, port, message in messages:
-            lights.append(Light(message.target_hex, host, port))
+            lights.append(Light(message.source, message.target_hex, host, port))
+
         return lights
 
     @staticmethod
@@ -196,32 +202,34 @@ class Lifx:
         for addr in broadcast_addresses:
             if not addr.exploded.startswith("192"):
                 continue
+
             sock.sendto(msg.packed_msg, (addr.exploded, DEVICE_PORT))
-            response = messages.extend(read(sock))
+            response = Lifx.read(sock)
             if response:
-                messages.extend(read(sock))
+                messages.extend(response)
 
             sock.close()
+
         return messages
 
+    @staticmethod
+    def read(sock: socket.socket) -> List[Tuple[str, int, Message]]:
+        """
+        Read responses from a socket.
 
-def read(sock: socket.socket) -> List[Tuple[str, int, Message]]:
-    """
-    Read responses from a socket.
+        Waits for and unpacks messages received on the given socket.
 
-    Waits for and unpacks messages received on the given socket.
+        Args:
+            sock: The socket to read from
 
-    Args:
-        sock: The socket to read from
-
-    Returns:
-        List of tuples containing (host, port, Message) for each response
-    """
-    responses = []
-    data, (host, port) = sock.recvfrom(128)
-    msg = Message.unpack(data)
-    responses.append((host, port, msg))
-    return responses
+        Returns:
+            List of tuples containing (host, port, Message) for each response
+        """
+        responses = []
+        data, (host, port) = sock.recvfrom(128)
+        msg = Message.unpack(data)
+        responses.append((host, port, msg))
+        return responses
 
 
 class Light:
@@ -236,15 +244,17 @@ class Light:
         port: The port to communicate with the light on
     """
 
-    def __init__(self, target_hex: bytes, host: str, port: int) -> None:
+    def __init__(self, source: str, target_hex: bytes, host: str, port: int) -> None:
         """
         Initialize a Light object.
 
         Args:
+            source: Source identifier used to differentiate clients
             target_hex: The MAC address of the light as a byte string
             host: The IP address of the light
             port: The port to communicate with the light on
         """
+        self.source = source
         self.target_hex = target_hex
         self.host = host
         self.port = port
@@ -279,8 +289,6 @@ class Light:
 
         Args:
             on: True to turn the light on, False to turn it off
-            res: Flag indicating if response is required (default: 0)
-            ack: Flag indicating if acknowledgment is required (default: 0)
 
         Returns:
             List of Message objects containing responses (if any)
@@ -303,7 +311,16 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def get_color(self):
+    def get_color(self) -> List[Message]:
+        """
+        Get the current color state of the light.
+
+        Sends a request to retrieve the current hue, saturation, brightness,
+        and color temperature of the light.
+
+        Returns:
+            List of Message objects containing the color state response
+        """
         msg = Message.pack(
             pkt_type=101,
             source=2,
@@ -316,18 +333,21 @@ class Light:
         messages = Lifx.send(msg)
         return messages
 
-    def set_color(self, hue, saturation, brightness, kelvin, duration=0) -> List[Message]:
+    def set_color(
+        self, hue: float, saturation: float, brightness: float, kelvin: int, duration: int = 0
+    ) -> List[Message]:
         """
         Set the color of the light.
 
         Args:
-            color: The color to set as a byte string
+            hue: Hue value in degrees (0-360)
+            saturation: Saturation value (0.0-1.0)
+            brightness: Brightness value (0.0-1.0)
+            kelvin: Color temperature in Kelvin (2500-9000)
+            duration: Transition time in milliseconds (default: 0)
 
         Returns:
             List of Message objects containing responses (if any)
-
-        Note:
-            This method is not implemented yet.
         """
 
         packet_data = struct.pack(
@@ -361,3 +381,6 @@ class Light:
             The MAC address of the light as a hex string
         """
         return binascii.hexlify(self.target_hex).decode()
+
+    def __repr__(self) -> str:
+        return f"<Light(hex={self.target})>"

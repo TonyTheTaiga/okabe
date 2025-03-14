@@ -29,7 +29,10 @@ version_file = "okabe/version.py"
 dev = ["python-dotenv"]
 
 [tool.setuptools]
-packages = ["okabe"]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["okabe*"]
 
 [tool.ruff]
 line-length = 100
