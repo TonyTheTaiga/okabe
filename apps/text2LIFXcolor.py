@@ -114,7 +114,7 @@ def main():
     and sets up a Nucleus agent to control lights with natural language.
     """
     lm = LightManager(lights=Lifx.discover())
-    nucleus = Nucleus("Update my lights to be at 30% and blue")
+    nucleus = Nucleus("update my lights for bedtime")
     nucleus.add_tool_option(
         name="get_lights",
         description="Returns a list of LIFX light ids",
