@@ -13,8 +13,9 @@ from okabe import Nucleus
 from okabe.nucleus import ToolSignature
 from okabe.tools.lifx import Lifx, Light, decode_color_state
 
-# Configure logging for the application
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -114,7 +115,7 @@ def main():
     and sets up a Nucleus agent to control lights with natural language.
     """
     lm = LightManager(lights=Lifx.discover())
-    nucleus = Nucleus("update my lights for bedtime")
+    nucleus = Nucleus("update my lights. blue. 20% brightness")
     nucleus.add_tool_option(
         name="get_lights",
         description="Returns a list of LIFX light ids",
@@ -123,7 +124,7 @@ def main():
     )
     nucleus.add_tool_option(
         name="update_light",
-        description="Set the color of a LIFX bulb, returns 0 on success and 1 other wise",
+        description="Set the color of a LIFX bulb, returns 0 on success and 1 other wise. All values are required. Retrieve the current state to see the current value",
         callable=lm.update_light,
         sig=[
             ToolSignature(name="light_id", dtype="string", description="The id of the light bulb"),
