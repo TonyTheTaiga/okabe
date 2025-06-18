@@ -126,6 +126,7 @@ class Nucleus:
         """
         run = True
         tools = self.compile_tools()
+        print(tools)
         messages = self.get_seed_prompt()
         system = "You are a helpful ai assistant with the ability to execute actions that require multiple turns as well as the ability to call tools"
         while run:

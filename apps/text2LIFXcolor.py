@@ -6,10 +6,11 @@ It uses Claude to interpret text descriptions and convert them to light control 
 """
 
 import random
+import json
 
 from okabe import Nucleus
 from okabe.nucleus import ToolSignature
-from okabe.tools.lifx import Lifx, Light
+from okabe.tools.lifx import Lifx, Light, decode_color_state
 
 
 class LightManager:
@@ -43,20 +44,58 @@ class LightManager:
         """
         return [light.target for light in self.lights]
 
-    def set_light_color(self, light_id: str, hue: int) -> int:
+    def update_light(
+        self,
+        light_id: str,
+        hue: int,
+        saturation: int,
+        brightness: int,
+        kelvin: int = 3500,
+        duration: int = 0,
+    ) -> int:
         """
         Set the color of a specific light.
 
         Args:
             light_id: The ID of the light to control
-            hue: The hue value to set (0-360)
+            hue: Hue value in degrees (0-360)
+            saturation: Saturation value (0-100)
+            brightness: Brightness value (0-100)
+            kelvin: Color temperature in Kelvin (2500-9000)
+            duration: Transition time in milliseconds (default: 0)
 
         Returns:
             0 on success, 1 on failure
         """
         try:
-            self.light_map[light_id].set_color(hue, 1.0, 1.0, 3500)
+            self.light_map[light_id].set_color(
+                hue, saturation / 100, brightness / 100, kelvin, duration
+            )
             return 0
+        except Exception as e:
+            print(e)
+            return 1
+
+    def get_light(self, light_id: str) -> str:
+        """
+        Get the current state of a light.
+
+        Args:
+            light_id: The ID of the target light
+
+        Returns:
+            ON SUCCESS:
+                str: A json str containing hue, saturation, brigthness, kelvin.
+
+            ON FAILURE:
+                int: 1
+        """
+        try:
+            status = self.light_map[light_id].get_color()
+            decoded = decode_color_state(status)
+            decoded.pop("label")
+            decoded.pop("power")
+            return json.dumps(decoded)
         except Exception as e:
             print(e)
             return 1
@@ -70,7 +109,7 @@ def main():
     and sets up a Nucleus agent to control lights with natural language.
     """
     lm = LightManager(lights=Lifx.discover())
-    nucleus = Nucleus("Set a random LIFX bulb in my apartment to a random color 5 times")
+    nucleus = Nucleus("Update my lights to be at 30% and blue")
     nucleus.add_tool_option(
         name="get_lights",
         description="Returns a list of LIFX light ids",
@@ -78,16 +117,44 @@ def main():
         sig=[],
     )
     nucleus.add_tool_option(
-        name="set_light_color",
+        name="update_light",
         description="Set the color of a LIFX bulb, returns 0 on success and 1 other wise",
-        callable=lm.set_light_color,
+        callable=lm.update_light,
         sig=[
-            ToolSignature(name="light_id", dtype="string", description="The id of the LIFX buld"),
+            ToolSignature(name="light_id", dtype="string", description="The id of the light bulb"),
             ToolSignature(
                 name="hue",
                 dtype="integer",
                 description="The hue to change the light bulb to, value between 0-360",
             ),
+            ToolSignature(
+                name="saturation",
+                dtype="integer",
+                description="The saturation to change the light bulb to, value between 0-100",
+            ),
+            ToolSignature(
+                name="brightness",
+                dtype="integer",
+                description="The brightness to change the light bulb to, value between 0-100",
+            ),
+            ToolSignature(
+                name="kelvin",
+                dtype="integer",
+                description="The kelvin to change the light bulb to, value between 2500-9000",
+            ),
+            ToolSignature(
+                name="duration",
+                dtype="integer",
+                description="The duration in milliseoncds that it will take for the light to transition to the new color",
+            ),
+        ],
+    )
+    nucleus.add_tool_option(
+        name="get_light",
+        description="get the current state of a light",
+        callable=lm.get_light,
+        sig=[
+            ToolSignature(name="light_id", dtype="string", description="The id of the light bulb")
         ],
     )
     nucleus.add_tool_option(
