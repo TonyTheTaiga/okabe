@@ -6,18 +6,21 @@ tools to control LIFX lights and potentially other devices.
 """
 
 import json
+import logging
 import os
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from anthropic import Anthropic
 from anthropic.types import TextBlock, ToolUseBlock
 
+logger = logging.getLogger(__name__)
+
 try:
     from dotenv import load_dotenv
 
     load_dotenv()
 except:
-    print("Make sure ANTHROPIC_API_KEY is set in your environment")
+    logger.info("Make sure ANTHROPIC_API_KEY is set in your environment")
 
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
@@ -144,7 +147,7 @@ class Nucleus:
                     ),
                 ]:
                     tool_result = self._tool_map[tool_block_name](**tool_block_input)
-                    print(text_block_text, tool_result)
+                    logger.info("%s %s", text_block_text, tool_result)
                     messages.append(
                         {
                             "role": "user",
@@ -185,8 +188,8 @@ class Nucleus:
                         }
                     )
                 case _:
-                    print(completion.content)
-                    print("breaking...")
+                    logger.info(completion.content)
+                    logger.info("breaking...")
                     run = False
 
     def compile_tools(self) -> List[Dict[str, Any]]:

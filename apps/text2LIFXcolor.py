@@ -7,10 +7,15 @@ It uses Claude to interpret text descriptions and convert them to light control 
 
 import random
 import json
+import logging
 
 from okabe import Nucleus
 from okabe.nucleus import ToolSignature
 from okabe.tools.lifx import Lifx, Light, decode_color_state
+
+# Configure logging for the application
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class LightManager:
@@ -73,7 +78,7 @@ class LightManager:
             )
             return 0
         except Exception as e:
-            print(e)
+            logger.error("Error updating light %s: %s", light_id, e)
             return 1
 
     def get_light(self, light_id: str) -> str:
@@ -97,7 +102,7 @@ class LightManager:
             decoded.pop("power")
             return json.dumps(decoded)
         except Exception as e:
-            print(e)
+            logger.error("Error getting light %s: %s", light_id, e)
             return 1
 
 
@@ -168,7 +173,7 @@ def main():
     )
 
     final = nucleus.run()
-    print(final)
+    logger.info("Final result: %s", final)
 
 
 if __name__ == "__main__":
